@@ -22,7 +22,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.fragment.findNavController
 import com.example.android.trackmysleepquality.R
+import com.example.android.trackmysleepquality.database.SleepDatabase
 import com.example.android.trackmysleepquality.databinding.FragmentSleepQualityBinding
 
 /**
@@ -38,14 +42,49 @@ class SleepQualityFragment : Fragment() {
      *
      * This function uses DataBindingUtil to inflate R.layout.fragment_sleep_quality.
      */
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
 
         // Get a reference to the binding object and inflate the fragment views.
         val binding: FragmentSleepQualityBinding = DataBindingUtil.inflate(
-                inflater, R.layout.fragment_sleep_quality, container, false)
+            inflater, R.layout.fragment_sleep_quality, container, false
+        )
 
         val application = requireNotNull(this.activity).application
+
+        //Get the arguments that came with the navigation:
+        val arguments = SleepQualityFragmentArgs.fromBundle(arguments!!)
+
+        //Get the dataSource:
+        val dataSource = SleepDatabase.getInstance(application).sleepDatabaseDao
+
+        //Create a factory passing in the dataSource and sleepNightKey:
+        val viewModelFactory = SleepQualityViewModelFactory(arguments.sleepNightKey, dataSource)
+
+        //Get a SleepQualityViewModel reference:
+        val sleepQualityViewModel =
+            ViewModelProviders.of(
+                this, viewModelFactory
+            ).get(SleepQualityViewModel::class.java)
+
+        //Add the sleepQualityViewModel to the binding object:
+        //Shows and error until we rebuild the app
+        binding.sleepQualityViewModel = sleepQualityViewModel
+
+        //Add the observer, as before:
+        //sleepQualityViewModel.navigateToSleepTracker.observe(this,  Observer {
+        sleepQualityViewModel.navigateToSleepTracker.observe(viewLifecycleOwner, Observer {
+            if (it == true) { // Observed state is true.
+                this.findNavController().navigate(
+                    SleepQualityFragmentDirections.actionSleepQualityFragmentToSleepTrackerFragment()
+                )
+                sleepQualityViewModel.doneNavigating()
+            }
+        })
+
+
 
         return binding.root
     }

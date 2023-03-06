@@ -55,6 +55,35 @@ class SleepTrackerViewModel(
         formatNights(nights, application.resources)
     }
 
+    /**
+    create three corresponding variables.
+
+    Assign them a Transformations that tests it against the value of tonight.
+
+    The START button should be visible when tonight is null, the STOP button when tonight
+    is not null, and the CLEAR button if nights contains any nights:
+    **/
+
+    val startButtonVisible= Transformations.map(tonight){
+        null == it
+    }
+
+    val stopButtonVisible = Transformations.map(tonight) {
+        null != it
+    }
+    val clearButtonVisible = Transformations.map(nights) {
+        it?.isNotEmpty()
+    }
+
+    private var _showSnackbarEvent = MutableLiveData<Boolean>()
+
+    val showSnackBarEvent: LiveData<Boolean>
+        get() = _showSnackbarEvent
+
+    fun doneShowingSnackbar() {
+        _showSnackbarEvent.value = false
+    }
+
     private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
 
     val navigateToSleepQuality: LiveData<SleepNight>
@@ -134,6 +163,7 @@ class SleepTrackerViewModel(
         uiScope.launch {
             clear()
             tonight.value = null
+            _showSnackbarEvent.value = true
         }
     }
 
